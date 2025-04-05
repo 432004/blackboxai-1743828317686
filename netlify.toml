@@ -1,0 +1,13 @@
+[build]
+  command = "echo 'No build needed for static site'"
+  publish = "/"
+  functions = "functions/"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[dev]
+  framework = "#static"
