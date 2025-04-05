@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | LearnHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="index.html" class="flex items-center py-4 px-2">
+                            <span class="font-semibold text-gray-500 text-lg">LearnHub</span>
+                        </a>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-1">
+                        <a href="index.html" class="py-4 px-2 text-gray-500 font-semibold hover:text-green-500 transition duration-300">Home</a>
+                        <a href="dashboard.html" class="py-4 px-2 text-green-500 border-b-4 border-green-500 font-semibold">Dashboard</a>
+                        <a href="profile.html" class="py-4 px-2 text-gray-500 font-semibold hover:text-green-500 transition duration-300">Profile</a>
+                    </div>
+                </div>
+                <div class="nav-auth flex items-center space-x-3">
+                    <!-- Will be populated by script.js -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">My Learning Dashboard</h1>
+        
+        <!-- Welcome Message -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-2">Welcome back, <span id="userName" class="text-green-600">User</span>!</h2>
+            <p class="text-gray-600">Continue your learning journey or explore new courses.</p>
+        </div>
+
+        <!-- Enrolled Courses -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">My Courses</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="enrolledCourses">
+                <!-- Courses will be dynamically inserted here -->
+                <div class="text-center py-12 text-gray-500" id="noCoursesMessage">
+                    <i class="fas fa-book-open text-4xl mb-4"></i>
+                    <p>You haven't enrolled in any courses yet.</p>
+                    <a href="index.html" class="mt-4 inline-block text-green-600 hover:underline">Browse courses</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Courses -->
+        <div>
+            <h2 class="text-2xl font-bold mb-4">Recommended For You</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="recommendedCourses">
+                <!-- Recommended courses will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="courses.js"></script>
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Load dashboard specific content
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentUser = getCurrentUser();
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Set user name
+            if (currentUser.name) {
+                document.getElementById('userName').textContent = currentUser.name;
+            } else {
+                document.getElementById('userName').textContent = currentUser.email.split('@')[0];
+            }
+
+            // Load enrolled courses
+            loadEnrolledCourses(currentUser);
+            loadRecommendedCourses();
+        });
+
+        function loadEnrolledCourses(user) {
+            const container = document.getElementById('enrolledCourses');
+            const noCoursesMsg = document.getElementById('noCoursesMessage');
+            
+            if (user.enrolledCourses && user.enrolledCourses.length > 0) {
+                noCoursesMsg.style.display = 'none';
+                
+                let html = '';
+                user.enrolledCourses.forEach(courseId => {
+                    const course = getCourseById(parseInt(courseId));
+                    if (course) {
+                        const progress = Math.floor(Math.random() * 100); // Random progress for demo
+                        
+                        html += `
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                            <img src="${course.image}" alt="${course.title}" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-2">${course.title}</h3>
+                                <div class="mb-4">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Progress</span>
+                                        <span>${progress}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-green-600 h-2.5 rounded-full" style="width: ${progress}%"></div>
+                                    </div>
+                                </div>
+                                <a href="course-details.html?id=${course.id}" class="block w-full text-center bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 mb-2">
+                                    Continue Learning
+                                </a>
+                                ${progress === 100 ? `
+                                <button onclick="generateCertificate(${course.id})" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                                    <i class="fas fa-certificate mr-2"></i> Get Certificate
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        `;
+                    }
+                });
+                
+                container.innerHTML = html;
+            }
+        }
+
+        function loadRecommendedCourses() {
+            const container = document.getElementById('recommendedCourses');
+            const allCourses = getAllCourses();
+            const recommended = allCourses.sort(() => 0.5 - Math.random()).slice(0, 3); // Random 3 courses
+            
+            let html = '';
+            recommended.forEach(course => {
+                html += `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300">
+                    <img src="${course.image}" alt="${course.title}" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <span class="inline-block px-3 py-1 text-sm font-semibold text-green-600 bg-green-100 rounded-full mb-2">${course.category}</span>
+                        <h3 class="text-xl font-bold mb-2">${course.title}</h3>
+                        <p class="text-gray-600 mb-4">${course.description}</p>
+                        <a href="course-details.html?id=${course.id}" class="block w-full text-center bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                            View Course
+                        </a>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
